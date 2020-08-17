@@ -6,6 +6,7 @@ class User
   include ActiveModel::Serializers
   include ActiveModel::Serializers::JSON
 
+  BASE_USER_KEY = 'lendesk:challenge:user'
   USER_ATTRIBUTES = [:username, :email, :password_digest, :name]
 
   attr_accessor :username, :email, :password_digest, :name
@@ -49,13 +50,21 @@ class User
     REDIS.hset user_key, attributes
   end
 
+  def delete
+    return nil unless persisted?
+
+    result = REDIS.del(user_key)
+
+    result.to_i == 1
+  end
+
   class << self
     def from_json(json)
       User.new.from_json(json)
     end
 
     def user_key(username)
-      "user-#{username.parameterize}"
+      "#{BASE_USER_KEY}-#{username.parameterize}"
     end
 
     def exists?(username)
@@ -65,8 +74,24 @@ class User
     def find_by_username(username)
       return nil unless exists?(username)
 
-      hash = REDIS.hgetall(user_key(username)).symbolize_keys.slice(*USER_ATTRIBUTES)
+      find_by_key(user_key(username))
+    end
+
+    def find_by_key(key)
+      hash = REDIS.hgetall(key).symbolize_keys.slice(*USER_ATTRIBUTES)
       User.new(**hash)
+    end
+
+    def map(cursor = 0)
+      cursor, user_keys = REDIS.scan(cursor, match: "#{BASE_USER_KEY}-*", count: 1000)
+      users_map = user_keys.map do |key|
+        find_by_key(key)
+      end
+
+      result = { users: users_map }
+      result[:next_cursor] = cursor unless cursor.to_i.zero?
+
+      result
     end
   end
 end
