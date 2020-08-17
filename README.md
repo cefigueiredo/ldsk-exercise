@@ -1,24 +1,20 @@
 # README
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+This apps has its pourpose just to exercise the development of simple api, 
+with an authentication layer, and using Redis to store data.
 
-Things you may want to cover:
-
-* Ruby version
+* Ruby version:
+Ruby 2.6
+Rails 6.0
 
 * System dependencies
 
+Redis > 4.0
+
 * Configuration
-
-* Database creation
-
-* Database initialization
+bundle install
+cp config/master.key.dev config/master.key
 
 * How to run the test suite
+rails test
 
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
