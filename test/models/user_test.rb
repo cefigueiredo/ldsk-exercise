@@ -62,4 +62,33 @@ class UserTest < ActiveSupport::TestCase
     assert BCrypt::Password.new(u.password_digest).is_password?("Complex1234!")
     assert u.authenticate_password("Complex1234!")
   end
+
+  test "user validates email format" do
+    valid_email = User.new(email: "valid@email.com")
+    invalid_email = User.new(email: "invalid_email")
+
+    valid_email.valid?
+    invalid_email.valid?
+
+    refute_includes valid_email.errors[:email], 'is invalid'
+    assert_includes invalid_email.errors[:email], 'is invalid'
+  end
+
+  test "user does not serializes password instance_value" do
+    u = User.new(username: 'test', password: 'Test1234!')
+    serialized = u.serializable_hash
+
+    assert_includes serialized.keys, "username"
+    assert_includes serialized.keys, "password_digest"
+    refute_includes serialized.keys, "password"
+  end
+
+  test "can instantiate a valid User from json" do
+    digest = BCrypt::Password.create("Test1234!")
+    json = { username: "test", password_digest: digest, name: "Test", email: "email@valid.com" }.to_json
+
+    user = User.from_json(json)
+
+    assert user.valid?
+  end
 end
