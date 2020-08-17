@@ -7,12 +7,6 @@ class User
   include ActiveModel::Serializers::JSON
 
   USER_ATTRIBUTES = [:username, :email, :password_digest, :name]
-  PASSWORD_COMPLEXITY_REQUIREMENT = %r{\A
-            # at least 1 lowercase letter
-    (?=.*[A-Z])        # at least 1 uppercase letter
-    (?=.*\d)           # at least 1 number
-    (?=.*[[:^alnum:]]) # at least 1 symbol
-  }x
 
   attr_accessor :username, :email, :password_digest, :name
 
