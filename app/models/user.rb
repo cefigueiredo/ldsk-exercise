@@ -6,6 +6,7 @@ class User
   include ActiveModel::Serializers
   include ActiveModel::Serializers::JSON
 
+  USER_ATTRIBUTES = [:username, :email, :password_digest, :name]
   PASSWORD_COMPLEXITY_REQUIREMENT = %r{\A
             # at least 1 lowercase letter
     (?=.*[A-Z])        # at least 1 uppercase letter
@@ -30,7 +31,7 @@ class User
 
   # attributes to be serialized. All attributes except non encrypted password
   def attributes
-    instance_values.except("password")
+    instance_values.with_indifferent_access.slice(*USER_ATTRIBUTES)
   end
 
   # requirement to instantiate User from a json
@@ -40,7 +41,38 @@ class User
     end
   end
 
-  def self.from_json(json)
-    User.new.from_json(json)
+  def user_key
+    self.class.user_key(username)
+  end
+
+  def persisted?
+    self.class.exists?(username)
+  end
+
+  def save
+    return false unless valid?
+
+    REDIS.hset user_key, attributes
+  end
+
+  class << self
+    def from_json(json)
+      User.new.from_json(json)
+    end
+
+    def user_key(username)
+      "user-#{username.parameterize}"
+    end
+
+    def exists?(username)
+      REDIS.exists?(user_key(username))
+    end
+
+    def find_by_username(username)
+      return nil unless exists?(username)
+
+      hash = REDIS.hgetall(user_key(username)).symbolize_keys.slice(*USER_ATTRIBUTES)
+      User.new(**hash)
+    end
   end
 end
