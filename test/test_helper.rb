@@ -18,7 +18,15 @@ class ActiveSupport::TestCase
   def create_user(params = {})
     user_params = { name: 'Test', username: 'test-1', email: 'test@email.com', password: 'Valid1234!' }.merge(params)
 
-    User.new(user_params).save
+    user = User.new(user_params)
+    user.save
+    user
+  end
+
+  def authorized_session_token(user = nil)
+    user ||= create_user(username: 'authorized_user')
+
+    Session.create_token(user.username)[:token]
   end
 end
 

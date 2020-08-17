@@ -15,6 +15,7 @@ require "action_cable/engine"
 # require "sprockets/railtie"
 require "rails/test_unit/railtie"
 
+require_relative '../lib/authentication/token_strategy.rb'
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.
 Bundler.require(*Rails.groups)
@@ -33,5 +34,9 @@ module ChallengeApi
     # Middleware like session, flash, cookies can be added back manually.
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
+    config.middleware.use Warden::Manager do |warden|
+      warden.default_strategies :token
+      warden.failure_app = Proc.new { |env| ['401', { 'Content-Type' => 'application/json' }, { error: 'Unauthorized', code: 401 }]}
+    end
   end
 end

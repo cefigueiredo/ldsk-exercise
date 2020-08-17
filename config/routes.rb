@@ -8,6 +8,8 @@ Rails.application.routes.draw do
       put '/users/:username', to: 'users#update'
       patch '/users/:username', to: 'users#update'
       delete '/users/:username', to: 'users#destroy'
+
+      post '/login', to: 'login#create'
     end
   end
 end
